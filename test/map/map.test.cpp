@@ -384,6 +384,20 @@ TEST(Map, PixelForLatLngWithTheCenterPastTheAntimeridian) {
     }
 }
 
+// The elevation overload places by the same unwrapped center; at sea level it matches the plain one.
+TEST(Map, PixelForLatLngAtAnElevationWithTheCenterPastTheAntimeridian) {
+    MapTest<> test;
+    test.map.setSize({512, 512});
+    test.map.setBounds(BoundOptions().withLatLngBounds(LatLngBounds::hull({-10.0, 170.0}, {10.0, 190.0})));
+    test.map.jumpTo(CameraOptions().withCenter(LatLng{0.0, 181.0}).withZoom(4.0));
+    ASSERT_NEAR(181.0, test.map.getCameraOptions().center->longitude(), 1e-9);
+
+    const double degree = 512.0 * 16.0 / 360.0;
+    for (const auto& [longitude, x] : {std::pair{179.0, 256.0 - 2 * degree}, std::pair{-179.5, 256.0 - 0.5 * degree}}) {
+        EXPECT_NEAR(x, test.map.pixelForLatLng({0.0, longitude}, 0.0).x, 1e-6) << longitude;
+    }
+}
+
 // https://github.com/maplibre/maplibre-native/issues/3580
 // iOS ends a pan with a moveBy that has a duration while the gesture is still in progress. Across the antimeridian the
 // move starts a world away, and annotation views placed through pixelForLatLng vanished until the center crossed.
