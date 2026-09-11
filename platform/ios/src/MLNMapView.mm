@@ -3259,7 +3259,7 @@ static void *windowScreenContext = &windowScreenContext;
 // MARK: Terrain
 
 - (void)setTerrainWithSourceIdentifier:(nullable NSString *)sourceIdentifier
-                           exaggeration:(CGFloat)exaggeration {
+                          exaggeration:(CGFloat)exaggeration {
   if (!self.style) {
     MLNLogWarning(@"Ignoring attempt to set terrain before the style has finished loading.");
     return;
@@ -3271,7 +3271,7 @@ static void *windowScreenContext = &windowScreenContext;
   }
 
   self.style.terrain = [[MLNTerrain alloc] initWithSourceIdentifier:sourceIdentifier
-                                                         exaggeration:exaggeration];
+                                                       exaggeration:exaggeration];
 }
 
 - (void)setTerrainLoadMode:(MLNTerrainLoadMode)terrainLoadMode {
