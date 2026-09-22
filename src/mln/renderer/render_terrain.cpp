@@ -332,8 +332,11 @@ void RenderTerrain::update(RenderOrchestrator& orchestrator,
                                                          : computeMeshCover(state, updateParameters);
     frameMeshCover.reset();
 
-    // Cap the mesh tile count: keep those nearest the map center, drop the farthest
-    // (the horizon tiles a high tilt pulls in). Everything downstream - drape
+    // Cap the mesh tile count: keep those nearest the camera, drop the farthest (the
+    // horizon tiles a high tilt pulls in). Nearest the camera, not the map centre: at a
+    // steep tilt the centre is far ahead, and the tiles right under the camera - the
+    // bottom corners of the screen, the biggest on it - would rank as far and be dropped,
+    // showing the skirts of the tiles behind them as streaks. Everything downstream - drape
     // targets, re-renders, depth draws - scales with this count.
     // Per-mode cap (TerrainLoadBudget::maxMeshTiles): Quality keeps a generous cap so terrain
     // render distance stays long; Balanced/Performance trade distance for frame time.
@@ -344,7 +347,11 @@ void RenderTerrain::update(RenderOrchestrator& orchestrator,
         // the map center, moved back along the view by the camera's horizontal distance.
         const LatLng center = state.getLatLng();
         const double latRad = util::deg2rad(center.latitude());
-        const double cy = 0.5 - std::log(std::tan(M_PI / 4.0 + latRad / 2.0)) / (2.0 * M_PI);
+        const double back = state.getCameraToCenterDistance() * std::sin(state.getPitch()) /
+                            Projection::worldSize(state.getScale());
+        const double compass = -state.getBearing(); // radians, clockwise from north
+        const double cx = center.longitude() / 360.0 + 0.5 - back * std::sin(compass);
+        const double cy = 0.5 - std::log(std::tan(M_PI / 4.0 + latRad / 2.0)) / (2.0 * M_PI) + back * std::cos(compass);
 
         const auto tileDist2 = [&](const UnwrappedTileID& id) {
             const double scale = static_cast<double>(1u << id.canonical.z);
