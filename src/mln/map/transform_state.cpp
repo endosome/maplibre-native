@@ -54,11 +54,12 @@ void TransformState::setProperties(const TransformStateProperties& properties) {
     if (properties.y) {
         setY(*properties.y);
     }
-    if (properties.z) {
-        setZ(*properties.z);
-    }
     if (properties.scale) {
         setScale(*properties.scale);
+    }
+    // After the scale: z is in pixels at the scale it comes with.
+    if (properties.z) {
+        setZ(*properties.z);
     }
     if (properties.bearing) {
         setBearing(*properties.bearing);
@@ -513,7 +514,7 @@ LatLng TransformState::latLngNearCenter(const LatLng& latLng) const {
 }
 
 double TransformState::getCenterAltitude() const {
-    return z * Projection::getMetersPerPixelAtLatitude(getLatLng().latitude(), getZoom());
+    return altitudeMeters;
 }
 
 double TransformState::pixel_x() const {
@@ -622,6 +623,7 @@ double TransformState::getScale() const {
 void TransformState::setScale(double val) {
     if (scale != val) {
         scale = val;
+        updateZ();
         requestMatricesUpdate = true;
     }
 }
@@ -646,6 +648,7 @@ double TransformState::getY() const {
 void TransformState::setY(double val) {
     if (y != val) {
         y = val;
+        updateZ();
         requestMatricesUpdate = true;
     }
 }
@@ -657,8 +660,15 @@ double TransformState::getZ() const {
 void TransformState::setZ(double val) {
     if (z != val) {
         z = val;
+        altitudeMeters = z * Projection::getMetersPerPixelAtLatitude(getLatLng().latitude(), getZoom());
         requestMatricesUpdate = true;
     }
+}
+
+void TransformState::updateZ() {
+    // The centre's altitude is a height in metres: a zoom or a move north keeps it, and only
+    // its size in pixels changes. Kept as pixels, a zoom would lift or sink it.
+    z = altitudeMeters / Projection::getMetersPerPixelAtLatitude(getLatLng().latitude(), getZoom());
 }
 
 // MARK: - Rotation
@@ -1056,7 +1066,8 @@ void TransformState::setLatLngZoom(const LatLng& latLng, double zoom) {
 }
 
 void TransformState::setCenterAltitude(double alt_m) {
-    z = alt_m / Projection::getMetersPerPixelAtLatitude(getLatLng().latitude(), getZoom());
+    altitudeMeters = alt_m;
+    updateZ();
     requestMatricesUpdate = true;
 }
 
@@ -1070,6 +1081,7 @@ void TransformState::setScalePoint(const double newScale, const ScreenCoordinate
     y = constrainedPoint.y;
     Bc = Projection::worldSize(scale) / util::DEGREES_MAX;
     Cc = Projection::worldSize(scale) / util::M2PI;
+    updateZ();
     requestMatricesUpdate = true;
 }
 
