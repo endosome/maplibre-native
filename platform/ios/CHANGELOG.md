@@ -58,6 +58,7 @@ MapLibre welcomes participation and contributions from everyone. Please read [`M
 - Fix the cumulative draw call count in Metal rendering statistics ([#4719](https://github.com/maplibre/maplibre-native/pull/4719)).
 - Use `@autoreleasepool` blocks on worker threads, so autoreleased objects such as Metal textures are released ([#4621](https://github.com/maplibre/maplibre-native/pull/4621)).
 - Make the set of available images copy-on-write, speeding up styles with many images and frequently updated sources ([#4651](https://github.com/maplibre/maplibre-native/pull/4651)).
+- feat(ios): add `-[MLNMapView captureNextFrameWithHandler:]`, which hands the next rendered frame over as a BGRA `CVPixelBuffer`, for recording the map frame by frame (Metal only).
 
 ## 6.31.0
 

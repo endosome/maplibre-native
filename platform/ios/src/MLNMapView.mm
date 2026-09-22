@@ -7629,6 +7629,15 @@ static void *windowScreenContext = &windowScreenContext;
   _mbglMap->enableRenderingStatsView(value);
 }
 
+- (void)captureNextFrameWithHandler:(void (^)(CVPixelBufferRef _Nullable))handler {
+  if (!_mbglView) {
+    handler(nil);
+    return;
+  }
+  _mbglView->captureNextFrame(handler);
+  [self triggerRepaint];
+}
+
 - (void)triggerRepaint {
   _mbglMap->triggerRepaint();
 }
