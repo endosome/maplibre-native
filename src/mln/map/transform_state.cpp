@@ -1040,7 +1040,9 @@ ScreenCoordinate TransformState::getCenterOffset() const {
 void TransformState::moveLatLng(const LatLng& latLng, const ScreenCoordinate& anchor) {
     auto centerCoord = Projection::project(getLatLng(LatLng::Unwrapped), scale);
     auto latLngCoord = Projection::project(latLng, scale);
-    auto anchorCoord = Projection::project(screenCoordinateToLatLng(anchor), scale);
+    // The anchor on the plane at the centre's altitude: the ground being looked at over
+    // terrain (sea level without it), the same plane the anchor's latLng was taken on.
+    auto anchorCoord = Projection::project(screenCoordinateToLatLng(anchor, getCenterAltitude()), scale);
     const LatLng center = Projection::unproject(centerCoord + latLngCoord - anchorCoord, scale);
     // Wrapped, as easeTo and GL JS's setLocationAtPoint leave it, unless bounds keep it in their range.
     setLatLngZoom(bounds == LatLngBounds() ? center.wrapped() : center, getZoom());
