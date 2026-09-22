@@ -148,7 +148,14 @@ std::set<UnwrappedTileID> RenderTerrain::computeMeshCover(
     // undersamples the DEM, aliasing the relief into waves on the fixed 128x128 mesh. Still the
     // elevation-aware ideal cover from the view, not the DEM's loaded tile set.
     const uint16_t terrainCoverTileSize = demSource->getTileSize();
-    const Range<uint8_t> zoomRange{0, demSource->getMaxZoom()};
+    // Mesh deeper than the DEM goes, as maplibre-gl-js does: a terrain tile past the DEM's maxzoom
+    // samples its closest DEM ancestor through the sub-tile offset (the per-tile lookup already
+    // walks ancestors), and its 1024 px drape target then covers a smaller area. Capped at the
+    // DEM maxzoom, a close-up at z16 over a z12 DEM stretched each target 8x (dotted roads,
+    // blocky fills); `terrainOverzoomLevels` more levels keep draped content near 1:1.
+    const Range<uint8_t> zoomRange{
+        0,
+        static_cast<uint8_t>(std::min<int>(demSource->getMaxZoom() + terrainOverzoomLevels, util::DEFAULT_MAX_ZOOM))};
 
     // LOD parameters from the frame drive the same near-high/far-low zoom
     // selection every other source uses, so the near field drapes at a higher
@@ -333,9 +340,9 @@ void RenderTerrain::update(RenderOrchestrator& orchestrator,
     const size_t maxMeshTiles = updateParameters ? terrainLoadBudget(updateParameters->terrainLoadMode).maxMeshTiles
                                                  : 0;
     if (maxMeshTiles > 0 && meshTiles.size() > maxMeshTiles) {
-        // Map center in normalized web-mercator [0,1] (standard projection)
+        // The ground under the camera in normalized web-mercator [0,1] (standard projection):
+        // the map center, moved back along the view by the camera's horizontal distance.
         const LatLng center = state.getLatLng();
-        const double cx = center.longitude() / 360.0 + 0.5;
         const double latRad = util::deg2rad(center.latitude());
         const double cy = 0.5 - std::log(std::tan(M_PI / 4.0 + latRad / 2.0)) / (2.0 * M_PI);
 
