@@ -80,6 +80,7 @@ We welcome ideas for extending the plugin API.
 - Fix resetting an in-memory offline database deleting a file of the same name ([#4720](https://github.com/maplibre/maplibre-native/pull/4720)).
 - Fix the cumulative draw call count in Metal rendering statistics ([#4719](https://github.com/maplibre/maplibre-native/pull/4719)).
 - Use `@autoreleasepool` blocks on worker threads, so autoreleased objects such as Metal textures are released ([#4621](https://github.com/maplibre/maplibre-native/pull/4621)).
+- feat(ios): add `-[MLNMapView captureNextFrameWithHandler:]`, which hands the next rendered frame over as a BGRA `CVPixelBuffer`, for recording the map frame by frame (Metal only).
 
 ## 6.31.0
 
