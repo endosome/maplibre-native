@@ -237,12 +237,15 @@ std::vector<OverscaledTileID> tileCover(const TileCoverParameters& state,
     const double requestedCenterZoom = transform.getZoom() + (unclampedZ - std::floor(transform.getZoom()));
     const util::TileZoomFunction tileZoom(util::rad2deg(transform.getFieldOfView()));
 
-    // Elevation has to reach the frustum in the aabb's units (tiles at zoom z).
-    // Renderable heights are in meters and Camera::getWorldToCamera scales them by
-    // pixelsPerMeter = worldSize / (cos(lat) * 2pi * R); pixels are then tiles at
-    // zoom z scaled by numTiles / worldSize, so worldSize cancels out.
-    const double metersToTileUnits = numTiles / (std::cos(util::deg2rad(transform.getLatLng().latitude())) *
-                                                 util::M2PI * util::EARTH_RADIUS_M);
+    // Elevation has to reach the frustum in the frustum's own units. Renderable heights are
+    // in meters, and Camera::getWorldToCamera applies pixelsPerMeter *inside* the projection
+    // matrix, so the inverse projection the frustum is built from hands back z in meters -
+    // scaled, like x and y, by numTiles / worldSize (Frustum::fromInvProjMatrix). The
+    // frustum's z is therefore meters * numTiles / worldSize, not a physical tile length.
+    // Converting through pixelsPerMeter as well shrank every height by that factor (~0.1
+    // at z12.5): raised ground right beside a low, steep camera - the bottom corners -
+    // tested as if near sea level, was culled, and its terrain drew with an empty drape.
+    const double metersToTileUnits = numTiles / worldSize;
 
     // The tile's bounds including its terrain: the flat footprint given the height of
     // the DEM covering it. Relief rising towards the camera takes up screen space that
@@ -412,9 +415,8 @@ std::set<UnwrappedTileID> frustumCull(const TileCoverParameters& state, const st
     const double numTiles = std::exp2(static_cast<double>(refZ));
     const double worldSize = Projection::worldSize(transform.getScale());
     const Frustum frustum = Frustum::fromInvProjMatrix(transform.getInvProjectionMatrix(), worldSize, refZ, flippedY);
-    // Meters to tile-units at refZ; see the same conversion in tileCover.
-    const double metersToTileUnits = numTiles / (std::cos(util::deg2rad(transform.getLatLng().latitude())) *
-                                                 util::M2PI * util::EARTH_RADIUS_M);
+    // Meters into the frustum's z units at refZ; see the same conversion in tileCover.
+    const double metersToTileUnits = numTiles / worldSize;
 
     std::set<UnwrappedTileID> result;
     for (const auto& id : tiles) {
