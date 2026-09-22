@@ -6,6 +6,7 @@
 #include <mln/map/camera.hpp>
 #include <mln/map/map_options.hpp>
 #include <mln/math/angles.hpp>
+#include <mln/map/mode.hpp>
 #include <mln/style/style.hpp>
 #include <mln/style/terrain.hpp>
 #include <mln/util/constants.hpp>
@@ -208,4 +209,15 @@ TEST(TerrainCamera, AnchoredCentreReturnsToSeaLevelWhenTerrainIsRemoved) {
     // Without terrain there is nothing to anchor on, whatever height was last reported.
     test.map.anchorCenterOnTerrain();
     EXPECT_NEAR(test.map.getCameraOptions({}).centerAltitude.value_or(0.0), 0.0, 0.001);
+}
+
+TEST(TerrainLoadBudget, MeshTileCapGrowsWithTheViewport) {
+    const auto balanced = terrainLoadBudget(TerrainLoadMode::Balanced).maxMeshTiles;
+    // A phone, or anything smaller: the budget as it is.
+    EXPECT_EQ(balanced, terrainMeshTileCap(TerrainLoadMode::Balanced, 390.0 * 844.0));
+    EXPECT_EQ(balanced, terrainMeshTileCap(TerrainLoadMode::Balanced, 320.0 * 568.0));
+    // Twice the area, twice the tiles; a 13" tablet (1032 x 1376 pt) is capped at 4x.
+    EXPECT_EQ(balanced * 2, terrainMeshTileCap(TerrainLoadMode::Balanced, 2 * 390.0 * 844.0));
+    EXPECT_EQ(balanced * 4, terrainMeshTileCap(TerrainLoadMode::Balanced, 1032.0 * 1376.0));
+    EXPECT_EQ(balanced * 4, terrainMeshTileCap(TerrainLoadMode::Balanced, 4000.0 * 4000.0));
 }
