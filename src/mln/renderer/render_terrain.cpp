@@ -338,9 +338,12 @@ void RenderTerrain::update(RenderOrchestrator& orchestrator,
     // bottom corners of the screen, the biggest on it - would rank as far and be dropped,
     // showing the skirts of the tiles behind them as streaks. Everything downstream - drape
     // targets, re-renders, depth draws - scales with this count.
-    // Per-mode cap (TerrainLoadBudget::maxMeshTiles): Quality keeps a generous cap so terrain
-    // render distance stays long; Balanced/Performance trade distance for frame time.
-    const size_t maxMeshTiles = updateParameters ? terrainLoadBudget(updateParameters->terrainLoadMode).maxMeshTiles
+    // Per-mode cap (TerrainLoadBudget::maxMeshTiles), grown for views bigger than a phone's
+    // (terrainMeshTileCap): Quality keeps a generous cap so terrain render distance stays long;
+    // Balanced/Performance trade distance for frame time.
+    const size_t maxMeshTiles = updateParameters ? terrainMeshTileCap(updateParameters->terrainLoadMode,
+                                                                      static_cast<double>(state.getSize().width) *
+                                                                          static_cast<double>(state.getSize().height))
                                                  : 0;
     if (maxMeshTiles > 0 && meshTiles.size() > maxMeshTiles) {
         // The ground under the camera in normalized web-mercator [0,1] (standard projection):
