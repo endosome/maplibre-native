@@ -74,6 +74,8 @@ private:
     /// previous one's content, which the per-target drape signature does not notice.
     const void* drapeLayersSeen = nullptr;
     std::size_t drapeStyleFingerprint = 0;
+    /// This frame's layer revisions (see PaintParameters::drapeLayerRevisions).
+    std::unordered_map<std::string, std::uintptr_t> layerIdentities;
 
     gfx::RendererBackend& backend;
 
