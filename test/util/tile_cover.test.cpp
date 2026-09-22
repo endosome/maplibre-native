@@ -2,6 +2,8 @@
 #include <mln/util/geo.hpp>
 #include <mln/map/transform.hpp>
 #include <mln/math/angles.hpp>
+#include <mln/util/projection.hpp>
+#include <mln/util/tile_coordinate.hpp>
 
 #include <algorithm>
 #include <cstdlib> /* srand, rand */
@@ -584,6 +586,53 @@ TEST(TileCover, CoveringZoomLevelRoundsForRasterSources) {
     EXPECT_EQ(5, util::coveringZoomLevel(4.6, style::SourceType::Video, util::tileSize_I));
     EXPECT_EQ(4, util::coveringZoomLevel(4.4, style::SourceType::RasterDEM, util::tileSize_I));
     EXPECT_EQ(6, util::coveringZoomLevel(4.6, style::SourceType::RasterDEM, 256));
+}
+
+namespace {
+// The same height everywhere, as if the whole map were a plateau.
+class ConstantElevation : public util::TileElevationProvider {
+public:
+    explicit ConstantElevation(double meters_)
+        : meters(meters_) {}
+    std::optional<Range<double>> getTileElevationRange(const CanonicalTileID&) const override {
+        return Range<double>{meters, meters};
+    }
+
+private:
+    double meters;
+};
+
+} // namespace
+
+TEST(TileCover, RaisedGroundNearTheCameraIsCovered) {
+    Transform transform;
+    transform.resize({512, 512});
+    transform.jumpTo(CameraOptions().withCenter(LatLng{50.7, 15.0}).withZoom(12.0).withPitch(58.0));
+    const TransformState& state = transform.getState();
+
+    // Ground raised to nearly the camera's height: the bottom of the view meets it well before
+    // it would meet sea level, kilometres nearer the camera.
+    const double metersPerPixel = Projection::getMetersPerPixelAtLatitude(50.7, 12.0);
+    const double cameraHeight = state.getCameraToCenterDistance() * metersPerPixel * std::cos(state.getPitch());
+    const ConstantElevation plateau(cameraHeight * 0.9);
+
+    // A column of 1.5 km tiles running from the centre towards the camera (south, map north-up).
+    const auto centre = TileCoordinate::fromLatLng(14, LatLng{50.7, 15.0}).p;
+    std::set<UnwrappedTileID> column;
+    for (uint32_t y = static_cast<uint32_t>(centre.y); y < static_cast<uint32_t>(centre.y) + 40; ++y) {
+        column.emplace(14, static_cast<uint32_t>(centre.x), y);
+    }
+    const auto southmost = [](const std::set<UnwrappedTileID>& tiles) {
+        uint32_t y = 0;
+        for (const auto& tile : tiles) y = std::max(y, tile.canonical.y);
+        return y;
+    };
+    const auto flat = util::frustumCull({state}, column);
+    const auto raised = util::frustumCull({.transformState = state, .elevationProvider = &plateau}, column);
+    ASSERT_FALSE(flat.empty());
+    // At least two tiles (3 km) further towards the camera. With the heights counted in the
+    // wrong units (pixelsPerMeter applied twice, ~8x too low here) it reached about 0.4 km.
+    EXPECT_GE(southmost(raised), southmost(flat) + 2);
 }
 
 TEST(TileCover, DISABLED_FuzzPoly) {
