@@ -291,6 +291,8 @@ interface NativeMap {
 
   int getTerrainLoadMode();
 
+  void anchorCenterOnTerrain();
+
   void setTerrainSkirtLength(int length);
 
   int getTerrainSkirtLength();

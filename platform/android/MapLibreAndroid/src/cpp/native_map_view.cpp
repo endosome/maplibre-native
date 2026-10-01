@@ -1345,6 +1345,10 @@ jni::jint NativeMapView::getTerrainLoadMode(JNIEnv&) {
     return jni::jint(static_cast<int>(map->getTerrainLoadMode()));
 }
 
+void NativeMapView::anchorCenterOnTerrain(JNIEnv&) {
+    map->anchorCenterOnTerrain();
+}
+
 void NativeMapView::setTerrainSkirtLength(JNIEnv&, jni::jint length) {
     map->setTerrainSkirtLength(static_cast<mln::TerrainSkirtLength>(length));
 }
@@ -1545,6 +1549,7 @@ void NativeMapView::registerNative(jni::JNIEnv& env) {
         METHOD(&NativeMapView::getTileLodScale, "nativeGetTileLodScale"),
         METHOD(&NativeMapView::setTerrainLoadMode, "nativeSetTerrainLoadMode"),
         METHOD(&NativeMapView::getTerrainLoadMode, "nativeGetTerrainLoadMode"),
+        METHOD(&NativeMapView::anchorCenterOnTerrain, "nativeAnchorCenterOnTerrain"),
         METHOD(&NativeMapView::setTerrainSkirtLength, "nativeSetTerrainSkirtLength"),
         METHOD(&NativeMapView::getTerrainSkirtLength, "nativeGetTerrainSkirtLength"),
         METHOD(&NativeMapView::setCenterClampedToGround, "nativeSetCenterClampedToGround"),
