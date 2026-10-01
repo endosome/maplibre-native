@@ -344,6 +344,8 @@ public:
 
     jni::jint getTerrainLoadMode(JNIEnv&);
 
+    void anchorCenterOnTerrain(JNIEnv&);
+
     void setTerrainSkirtLength(JNIEnv&, jni::jint);
 
     jni::jint getTerrainSkirtLength(JNIEnv&);
