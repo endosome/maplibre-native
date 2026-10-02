@@ -924,6 +924,22 @@ final class NativeMapView implements NativeMap {
   }
 
   @Override
+  public boolean setCenterAltitudeKeepingView(double altitude) {
+    if (checkState("setCenterAltitudeKeepingView")) {
+      return false;
+    }
+    return nativeSetCenterAltitudeKeepingView(altitude);
+  }
+
+  @Override
+  public double getCenterAltitude() {
+    if (checkState("getCenterAltitude")) {
+      return 0;
+    }
+    return nativeGetCenterAltitude();
+  }
+
+  @Override
   public void setTerrainSkirtLength(int length) {
     if (checkState("setTerrainSkirtLength")) {
       return;
@@ -1958,6 +1974,12 @@ final class NativeMapView implements NativeMap {
 
   @Keep
   private native void nativeAnchorCenterOnTerrain();
+
+  @Keep
+  private native boolean nativeSetCenterAltitudeKeepingView(double altitude);
+
+  @Keep
+  private native double nativeGetCenterAltitude();
 
   @Keep
   private native void nativeSetTerrainSkirtLength(int length);
