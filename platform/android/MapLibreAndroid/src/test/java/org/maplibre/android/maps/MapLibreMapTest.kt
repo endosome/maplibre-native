@@ -262,4 +262,12 @@ class MapLibreMapTest : BaseTest() {
         verify { nativeMapView.setZoom(2.0, target, 0) }
     }
 
+    @Test
+    fun testQueryTerrainElevation() {
+        val at = LatLng(49.1795, 20.0881)
+        every { nativeMapView.queryTerrainElevation(at) } returns 2499.0
+        assertEquals(2499.0, maplibreMap.queryTerrainElevation(at)!!, 0.0)
+        every { nativeMapView.queryTerrainElevation(at) } returns Double.NaN
+        assertEquals(null, maplibreMap.queryTerrainElevation(at))
+    }
 }

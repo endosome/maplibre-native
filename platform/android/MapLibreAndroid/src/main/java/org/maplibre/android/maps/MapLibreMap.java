@@ -517,6 +517,20 @@ public final class MapLibreMap {
   }
 
   /**
+   * The height of the 3D terrain's surface at a coordinate, from the elevation tiles loaded now: what the map draws
+   * there, so a marker or a reading placed at that height sits on the ground.
+   *
+   * @param latLng the coordinate
+   * @return metres above sea level with the terrain's exaggeration applied, or null without 3D terrain or before an
+   * elevation tile covering the coordinate has loaded
+   */
+  @Nullable
+  public Double queryTerrainElevation(@NonNull LatLng latLng) {
+    double elevation = nativeMapView.queryTerrainElevation(latLng);
+    return Double.isNaN(elevation) ? null : elevation;
+  }
+
+  /**
    * Camera based tile level of detail controls
    *
    * @param threshold pitch angle in radians above which LOD calculation is performed

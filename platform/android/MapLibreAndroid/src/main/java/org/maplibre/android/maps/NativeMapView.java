@@ -940,6 +940,14 @@ final class NativeMapView implements NativeMap {
   }
 
   @Override
+  public double queryTerrainElevation(@NonNull LatLng latLng) {
+    if (checkState("queryTerrainElevation")) {
+      return Double.NaN;
+    }
+    return nativeQueryTerrainElevation(latLng.getLatitude(), latLng.getLongitude());
+  }
+
+  @Override
   public void setTerrainSkirtLength(int length) {
     if (checkState("setTerrainSkirtLength")) {
       return;
@@ -1980,6 +1988,9 @@ final class NativeMapView implements NativeMap {
 
   @Keep
   private native double nativeGetCenterAltitude();
+
+  @Keep
+  private native double nativeQueryTerrainElevation(double lat, double lon);
 
   @Keep
   private native void nativeSetTerrainSkirtLength(int length);
