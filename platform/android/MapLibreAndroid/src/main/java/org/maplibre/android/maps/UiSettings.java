@@ -867,6 +867,10 @@ public final class UiSettings {
    * This setting controls only user interactions with the map. If you set the value to false,
    * you may still change the map location programmatically.
    * </p>
+   * <p>
+   * While double-tap zoom is off, map clicks are reported as the finger lifts, without waiting for a possible
+   * second tap, and each of two quick taps is a click.
+   * </p>
    * The default value is true.
    *
    * @param doubleTapGesturesEnabled If true, zooming with a double tap is enabled.
