@@ -1376,6 +1376,17 @@ jni::jdouble NativeMapView::getCenterAltitude(JNIEnv&) {
     return jni::jdouble(map->getCameraOptions().centerAltitude.value_or(0.0));
 }
 
+jni::jdouble NativeMapView::queryTerrainElevation(JNIEnv&, jni::jdouble latitude, jni::jdouble longitude) {
+    // The terrain's height (exaggerated) from the DEM tiles loaded now; the render thread holds them, so a bounded
+    // round trip, skipped without terrain. NaN when there is no answer.
+    if (!rendererFrontend->hasStyleTerrain()) {
+        return std::numeric_limits<double>::quiet_NaN();
+    }
+    const auto elevation = rendererFrontend->queryTerrainElevation(mln::LatLng(latitude, longitude),
+                                                                   terrainQueryTimeout);
+    return elevation ? *elevation : std::numeric_limits<double>::quiet_NaN();
+}
+
 void NativeMapView::setTerrainSkirtLength(JNIEnv&, jni::jint length) {
     map->setTerrainSkirtLength(static_cast<mln::TerrainSkirtLength>(length));
 }
@@ -1579,6 +1590,7 @@ void NativeMapView::registerNative(jni::JNIEnv& env) {
         METHOD(&NativeMapView::anchorCenterOnTerrain, "nativeAnchorCenterOnTerrain"),
         METHOD(&NativeMapView::setCenterAltitudeKeepingView, "nativeSetCenterAltitudeKeepingView"),
         METHOD(&NativeMapView::getCenterAltitude, "nativeGetCenterAltitude"),
+        METHOD(&NativeMapView::queryTerrainElevation, "nativeQueryTerrainElevation"),
         METHOD(&NativeMapView::setTerrainSkirtLength, "nativeSetTerrainSkirtLength"),
         METHOD(&NativeMapView::getTerrainSkirtLength, "nativeGetTerrainSkirtLength"),
         METHOD(&NativeMapView::setCenterClampedToGround, "nativeSetCenterClampedToGround"),
