@@ -10,6 +10,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.view.InputDevice;
 import android.view.MotionEvent;
+import android.view.ViewConfiguration;
 import android.view.animation.DecelerateInterpolator;
 
 import androidx.annotation.NonNull;
@@ -340,23 +341,45 @@ final class MapGestureDetector {
   private final class StandardGestureListener extends StandardGestureDetector.SimpleStandardOnGestureListener {
     private final float doubleTapMovementThreshold;
 
+    /**
+     * Set when a tap was handled as the finger lifted (double-tap zoom off), so that its confirmation after the
+     * double-tap timeout doesn't handle it a second time.
+     */
+    private boolean tapHandledOnUp;
+
     StandardGestureListener(float doubleTapMovementThreshold) {
       this.doubleTapMovementThreshold = doubleTapMovementThreshold;
     }
 
     @Override
     public boolean onDown(MotionEvent motionEvent) {
+      tapHandledOnUp = false;
       return true;
     }
 
     @Override
     public boolean onSingleTapUp(MotionEvent motionEvent) {
       transform.cancelTransitions();
+      if (!isDoubleTapZoomEnabled()) {
+        // No second tap can zoom, so there is nothing to wait for: the tap is a click now, not after the
+        // double-tap timeout.
+        tapHandledOnUp = true;
+        handleTap(motionEvent);
+      }
       return true;
     }
 
     @Override
     public boolean onSingleTapConfirmed(MotionEvent motionEvent) {
+      if (tapHandledOnUp) {
+        tapHandledOnUp = false;
+        return true;
+      }
+      handleTap(motionEvent);
+      return true;
+    }
+
+    private void handleTap(MotionEvent motionEvent) {
       PointF tapPoint = new PointF(motionEvent.getX(), motionEvent.getY());
       boolean tapHandled = annotationManager.onTap(tapPoint);
 
@@ -368,8 +391,6 @@ final class MapGestureDetector {
 
         notifyOnMapClickListeners(tapPoint);
       }
-
-      return true;
     }
 
     @Override
@@ -388,7 +409,13 @@ final class MapGestureDetector {
           return false;
         }
 
-        if (!uiSettings.isZoomGesturesEnabled() || !uiSettings.isDoubleTapGesturesEnabled()) {
+        if (!isDoubleTapZoomEnabled()) {
+          // Without double-tap zoom, a quick second tap is a click of its own rather than lost
+          // (unless it was held into a long press).
+          if (motionEvent.getEventTime() - motionEvent.getDownTime() < ViewConfiguration.getLongPressTimeout()) {
+            handleTap(motionEvent);
+            return true;
+          }
           return false;
         }
 
@@ -464,6 +491,10 @@ final class MapGestureDetector {
 
       return true;
     }
+  }
+
+  private boolean isDoubleTapZoomEnabled() {
+    return uiSettings.isZoomGesturesEnabled() && uiSettings.isDoubleTapGesturesEnabled();
   }
 
   private void doubleTapStarted() {
