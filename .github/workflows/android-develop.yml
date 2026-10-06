@@ -45,4 +45,4 @@ jobs:
           MAVEN_REPOSITORY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
         run: >
           ./gradlew :MapLibreAndroid:publishMultibackendreleasePublicationToConfiguredRepository
-          -Pmaplibre.abis=arm64-v8a,x86_64
+          "-Pmaplibre.abis=arm64-v8a x86_64"
