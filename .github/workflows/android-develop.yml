@@ -36,7 +36,7 @@ jobs:
       - uses: ./.github/actions/setup-android-ci
 
       - name: Unit tests
-        run: ./gradlew :MapLibreAndroid:testMultiBackendReleaseUnitTest -Pmaplibre.abis=arm64-v8a
+        run: ./gradlew :MapLibreAndroid:testMultiBackendDebugUnitTest -Pmaplibre.abis=arm64-v8a
 
       - name: Publish the AAR to GitHub Packages
         env:
