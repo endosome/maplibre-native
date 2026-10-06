@@ -297,6 +297,8 @@ interface NativeMap {
 
   double getCenterAltitude();
 
+  double queryTerrainElevation(@NonNull LatLng latLng);
+
   void setTerrainSkirtLength(int length);
 
   int getTerrainSkirtLength();
