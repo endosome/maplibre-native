@@ -1,0 +1,48 @@
+name: android-develop
+
+# Our fork's Android build: on every push to `develop`, MapLibre's Android unit
+# tests, then the multiBackend AAR (Vulkan and OpenGL ES, chosen when the app starts) for phones and the emulator,
+# published to this repository's GitHub Packages as org.maplibre.gl:android-sdk-vulkan-opengl:<VERSION>.
+# The VERSION file names the release; publishing a version twice fails, so bump it with each change.
+
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: android-develop-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  aar:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: platform/android
+    env:
+      IS_LOCAL_DEVELOPMENT: false
+      MLN_ANDROID_STL: c++_static
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: recursive
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup-android-ci
+
+      - name: Unit tests
+        run: ./gradlew :MapLibreAndroid:testMultiBackendReleaseUnitTest -Pmaplibre.abis=arm64-v8a
+
+      - name: Publish the AAR to GitHub Packages
+        env:
+          MAVEN_REPOSITORY_URL: https://maven.pkg.github.com/${{ github.repository }}
+          MAVEN_REPOSITORY_USERNAME: ${{ github.actor }}
+          MAVEN_REPOSITORY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+        run: >
+          ./gradlew :MapLibreAndroid:publishMultibackendreleasePublicationToConfiguredRepository
+          -Pmaplibre.abis=arm64-v8a,x86_64
