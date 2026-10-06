@@ -38,6 +38,8 @@ ExternalProject_Add(maplibre-opengl-build
         ${_fwd}
         -DMLN_WITH_OPENGL=ON
         -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${_gl}/lib
+    # Declared, so the stub targets below can depend on it (LINK_DEPENDS) before the first build made it.
+    BUILD_BYPRODUCTS ${_gl}/lib/libmaplibre.so
     BUILD_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> --target maplibre
     INSTALL_COMMAND ""
     BUILD_ALWAYS 1)
@@ -49,6 +51,8 @@ ExternalProject_Add(maplibre-vulkan-build
         ${_fwd}
         -DMLN_WITH_VULKAN=ON
         -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${_vk}/lib
+    # Declared, so the stub targets below can depend on it (LINK_DEPENDS) before the first build made it.
+    BUILD_BYPRODUCTS ${_vk}/lib/libmaplibre.so
     BUILD_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> --target maplibre
     INSTALL_COMMAND ""
     BUILD_ALWAYS 1)
@@ -61,6 +65,9 @@ file(WRITE ${_stub} "extern \"C\" void maplibre_multi_backend_stub() {}\n")
 
 add_library(maplibre-opengl SHARED ${_stub})    # -> libmaplibre-opengl.so
 add_dependencies(maplibre-opengl maplibre-opengl-build)
+# Relink (and so copy, POST_BUILD) whenever the backend's .so changes: without it the stub never relinks after the
+# first build, and incremental builds package the first build's library.
+set_target_properties(maplibre-opengl PROPERTIES LINK_DEPENDS ${_gl}/lib/libmaplibre.so)
 add_custom_command(TARGET maplibre-opengl POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
         ${_gl}/lib/libmaplibre.so
@@ -71,7 +78,7 @@ add_library(maplibre-vulkan SHARED ${_stub})
 # Produce libmaplibre.so (not libmaplibre-vulkan.so): Vulkan is the multiBackend AAR's
 # default/primary library, matching the SDK-wide convention where Vulkan is the default
 # backend and OpenGL ships as the explicitly-named "-opengl" variant.
-set_target_properties(maplibre-vulkan PROPERTIES OUTPUT_NAME maplibre)
+set_target_properties(maplibre-vulkan PROPERTIES OUTPUT_NAME maplibre LINK_DEPENDS ${_vk}/lib/libmaplibre.so)
 add_dependencies(maplibre-vulkan maplibre-vulkan-build)
 add_custom_command(TARGET maplibre-vulkan POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
