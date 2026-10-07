@@ -55,6 +55,9 @@ public:
     std::vector<vk::DeviceSize> vulkanVertexOffsets;
 
     std::unique_ptr<ImageDescriptorSet> imageDescriptorSet;
+
+    // A warning about a texture without an image was logged for this drawable and not yet cleared by a good frame.
+    bool missingTextureLogged = false;
 };
 
 } // namespace vulkan

@@ -81,6 +81,10 @@ public:
 
     vk::Format getVulkanFormat() const { return vulkanFormat(pixelFormat, channelType); }
 
+    /// Whether the texture has an image to bind. A texture loses it when its size or format changes (it is
+    /// recreated by the next upload) or when it is destroyed; binding one without would dereference nothing.
+    bool hasImage() const noexcept { return static_cast<bool>(imageAllocation); }
+
     const vk::ImageLayout& getVulkanImageLayout() const { return imageLayout; }
     const vk::UniqueImageView& getVulkanImageView() const { return imageAllocation->imageView; }
     const vk::Image& getVulkanImage() const { return imageAllocation->image; }
