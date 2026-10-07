@@ -514,10 +514,31 @@ bool Drawable::bindDescriptors(CommandEncoder& encoder) const {
 
     if (!shader) return false;
 
+    const auto& shaderImpl = static_cast<const mln::vulkan::ShaderProgram&>(*shader);
+
+    // A texture without an image cannot be bound: its size or format changed (or it was destroyed) and it has not been
+    // uploaded again. Binding it dereferenced a null image allocation and crashed the render thread (seen when the 3D
+    // terrain was switched off while the map was busy). Skip this drawable for the frame instead: one tile layer missing
+    // for a frame heals itself, a wrong texture would not tell anyone. Debug builds assert so the tests fail loudly.
+    if (shaderImpl.hasTextures()) {
+        for (std::size_t id = 0; id < textures.size(); ++id) {
+            const auto& texture = textures[id];
+            if (texture && !static_cast<const Texture2D&>(*texture).hasImage()) {
+                if (!impl->missingTextureLogged) {
+                    impl->missingTextureLogged = true;
+                    mln::Log::Warning(mln::Event::Render,
+                                      "Skipping drawable '" + getName() + "': texture " + std::to_string(id) + " has no image");
+                }
+                assert(false && "a drawable's texture has no image: it was resized or destroyed and not uploaded again");
+                return false;
+            }
+        }
+        impl->missingTextureLogged = false;
+    }
+
     // bind uniforms
     impl->uniformBuffers.bindDescriptorSets(encoder);
 
-    const auto& shaderImpl = static_cast<const mln::vulkan::ShaderProgram&>(*shader);
     if (shaderImpl.hasTextures()) {
         // update image set
         if (!impl->imageDescriptorSet) {
