@@ -310,6 +310,11 @@ void Map::Impl::onDidFinishRenderingFrame(RenderMode renderMode,
     } else if (stillImageRequest && rendererFullyLoaded) {
         const auto request = std::move(stillImageRequest);
         request->callback(nullptr);
+    } else if (stillImageRequest && needsRepaint) {
+        // The renderer reported the frame partial and asked for another: deferred terrain work (drapes, new tiles)
+        // that only more frames complete. Nothing else would draw them in a still image, which would wait for ever.
+        // The renderer bounds how long it keeps reporting partial frames for that.
+        onUpdate();
     }
 
     lastFrameStats = std::move(stats);
