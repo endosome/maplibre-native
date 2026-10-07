@@ -575,6 +575,13 @@ MLN_EXPORT
 @property (nonatomic, assign) MLNTerrainSkirtLength terrainSkirtLength;
 
 /**
+ The 3D terrain's height in metres (with the exaggeration applied) at a coordinate, from the elevation
+ tiles loaded now, or `NAN` without terrain or before a tile covers the coordinate. The counterpart of
+ `MapLibreMap.queryTerrainElevation` on Android.
+ */
+- (double)terrainElevationAtCoordinate:(CLLocationCoordinate2D)coordinate NS_SWIFT_NAME(terrainElevation(at:));
+
+/**
  Renders the map once more and hands that frame to `handler` as a BGRA pixel buffer, as drawn
  (map only, no UIKit views over it). `nil` where the renderer cannot capture. For making videos
  frame by frame: set the camera, wait for
