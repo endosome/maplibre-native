@@ -811,14 +811,21 @@ void Renderer::Impl::render(const RenderTree& renderTree, const std::shared_ptr<
     // new tiles were deferred (the per-frame budget, or a drape texture that could not be
     // allocated) shows those tiles without their content - the style's background colour - and
     // an app waiting for a complete frame (a snapshot, a video frame) must not take it.
-    const bool terrainPending = drapeWorkDeferred || context.newTileBuildWasDeferred() || terrainCoverPending;
+    const bool terrainDeferred = drapeWorkDeferred || context.newTileBuildWasDeferred() || terrainCoverPending;
+    // Bounded: a terrain that cannot catch up (a drape texture that can never be allocated, a tile that never
+    // loads) must not keep every frame partial for ever, or whoever waits for a complete frame waits for ever (the
+    // render tests of terrain/skirts-* did, on a software renderer). After this many partial frames in a row the
+    // frame counts as complete; the follow-up frames are still requested.
+    constexpr uint32_t maxTerrainPendingFrames = 120;
+    terrainPendingFrames = terrainDeferred ? terrainPendingFrames + 1 : 0;
+    const bool terrainPending = terrainDeferred && terrainPendingFrames <= maxTerrainPendingFrames;
     const bool complete = renderTreeParameters.loaded && !terrainPending;
     observer->onDidFinishRenderingFrame(
         complete ? RendererObserver::RenderMode::Full : RendererObserver::RenderMode::Partial,
         // Request a follow-up frame if the drape budget deferred any target or the tile-build
         // budget deferred any new tile, so deferred drapes/tiles catch up progressively even
         // after the interaction stops.
-        renderTreeParameters.needsRepaint || terrainPending,
+        renderTreeParameters.needsRepaint || terrainDeferred,
         renderTreeParameters.placementChanged,
         std::move(stats));
 
