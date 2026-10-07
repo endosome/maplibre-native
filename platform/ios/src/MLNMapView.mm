@@ -7682,6 +7682,18 @@ static void *windowScreenContext = &windowScreenContext;
   _mbglMap->enableRenderingStatsView(value);
 }
 
+- (double)terrainElevationAtCoordinate:(CLLocationCoordinate2D)coordinate {
+  if (!CLLocationCoordinate2DIsValid(coordinate) || !_rendererFrontend) {
+    return NAN;
+  }
+  mln::Renderer *renderer = _rendererFrontend->getRenderer();
+  if (!renderer) {
+    return NAN;
+  }
+  const auto elevation = renderer->queryTerrainElevation(MLNLatLngFromLocationCoordinate2D(coordinate));
+  return elevation ? *elevation : NAN;
+}
+
 - (void)captureNextFrameWithHandler:(void (^)(CVPixelBufferRef _Nullable))handler {
   if (!_mbglView) {
     handler(nil);
