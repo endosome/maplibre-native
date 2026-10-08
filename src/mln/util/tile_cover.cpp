@@ -266,9 +266,15 @@ std::vector<OverscaledTileID> tileCover(const TileCoverParameters& state,
         if (!range) {
             return node.aabb; // no DEM loaded here yet: flat, as before
         }
+        // Stretched down to the flat footprint (z = 0) as well, so height can only add tiles to the flat cover, never
+        // take one away. A tile the flat test keeps but whose relief lies outside the frustum - the camera below the
+        // ground near its centre, as at high zoom over mountains when the centre isn't clamped to the terrain - was
+        // dropped, and for the DEM source, whose own tiles give the heights, that made the cover flip every frame
+        // (tiles, so heights, so no tiles, so no heights...) and the map never came to rest
+        // (TerrainIdle.ComesToRestPastTheDEMMaxzoom).
         AABB elevated = node.aabb;
-        elevated.min[2] = range->min * metersToTileUnits;
-        elevated.max[2] = range->max * metersToTileUnits;
+        elevated.min[2] = std::min(0.0, range->min * metersToTileUnits);
+        elevated.max[2] = std::max(0.0, range->max * metersToTileUnits);
         return elevated;
     };
 
@@ -427,8 +433,9 @@ std::set<UnwrappedTileID> frustumCull(const TileCoverParameters& state, const st
 
         if (state.elevationProvider) {
             if (const auto range = state.elevationProvider->getTileElevationRange(id.canonical)) {
-                aabb.min[2] = range->min * metersToTileUnits;
-                aabb.max[2] = range->max * metersToTileUnits;
+                // Down to the flat footprint too, as in tileCover: height only adds visibility.
+                aabb.min[2] = std::min(0.0, range->min * metersToTileUnits);
+                aabb.max[2] = std::max(0.0, range->max * metersToTileUnits);
             }
         }
 
