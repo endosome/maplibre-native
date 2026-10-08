@@ -799,8 +799,18 @@ void Renderer::Impl::render(const RenderTree& renderTree, const std::shared_ptr<
     // Report the rendered terrain height under the map centre. Only the render side has the
     // DEM, so this is the channel; whether the camera acts on it is the map's call
     // (Map::setCenterClampedToGround). Gated so a still map does not post a message a frame.
+    //
+    // Only a height the DEM actually has is reported. A frame on which no DEM tile covers the centre says nothing about
+    // the ground, and reporting 0 for it fed a loop that never let the map come to rest: the camera dropped to sea level,
+    // the next frame's tile cover (one frame behind the camera) then judged every DEM tile above the view and dropped
+    // it, which again left the centre without a DEM tile - flipping between the two heights every frame, at high zoom
+    // over mountains (TerrainIdle.ComesToRestPastTheDEMMaxzoom). Terrain switched off still takes the centre back to
+    // sea level.
     if (auto* terrain = orchestrator.getRenderTerrain()) {
-        const double centerElevation = terrain->getElevationForLatLng(updateParameters->transformState.getLatLng());
+        const std::optional<double> sampled = terrain->isEnabled()
+                                                  ? terrain->getElevationAtLatLng(updateParameters->transformState.getLatLng())
+                                                  : std::optional<double>(0.0);
+        const double centerElevation = sampled.value_or(lastReportedCenterElevation);
         if (std::abs(centerElevation - lastReportedCenterElevation) > 0.25) {
             lastReportedCenterElevation = centerElevation;
             observer->onTerrainCenterElevationChanged(centerElevation);
