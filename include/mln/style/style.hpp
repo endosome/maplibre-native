@@ -19,6 +19,7 @@ class FileSource;
 namespace style {
 
 class Light;
+class Terrain;
 class Source;
 class Layer;
 
@@ -56,6 +57,11 @@ public:
     GlobalStateMap getGlobalState() const;
     /// Throws if the style has not finished loading.
     void setGlobalStateProperty(const std::string& name, const Value& value);
+    // Terrain
+    Terrain* getTerrain();
+    const Terrain* getTerrain() const;
+
+    void setTerrain(std::unique_ptr<Terrain>);
 
     // Images
     std::optional<Image> getImage(const std::string&) const;
