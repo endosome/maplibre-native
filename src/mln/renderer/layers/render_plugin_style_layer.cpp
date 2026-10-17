@@ -174,7 +174,7 @@ void RenderPluginStyleLayer::update(gfx::ShaderRegistry& shaders,
         }
     }
     if (!layerGroup) {
-        if (auto group = context.createTileLayerGroup(layerIndex, 64, getID())) {
+        if (auto group = context.createTileLayerGroup(layerIndex, 64, getID(), false)) {
             setLayerGroup(std::move(group), changes);
         } else {
             return;
