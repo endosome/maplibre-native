@@ -16,11 +16,7 @@
 #include <mln/util/logging.hpp>
 #include <mln/util/platform.hpp>
 #include <mln/util/projection.hpp>
-#include <mln/style/style.hpp>
 #include <mln/style/terrain.hpp>
-#include <mln/style/image.hpp>
-#include <mln/style/filter.hpp>
-#include <mln/renderer/query.hpp>
 
 // Java -> C++ conversion
 #include <mln/style/conversion/filter.hpp>
