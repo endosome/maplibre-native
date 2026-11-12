@@ -7690,7 +7690,8 @@ static void *windowScreenContext = &windowScreenContext;
   if (!renderer) {
     return NAN;
   }
-  const auto elevation = renderer->queryTerrainElevation(MLNLatLngFromLocationCoordinate2D(coordinate));
+  const auto elevation =
+      renderer->queryTerrainElevation(MLNLatLngFromLocationCoordinate2D(coordinate));
   return elevation ? *elevation : NAN;
 }
 

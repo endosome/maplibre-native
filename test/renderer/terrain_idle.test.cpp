@@ -70,10 +70,12 @@ TEST(TerrainIdle, ComesToRestPastTheDEMMaxzoom) {
         if (status.mode != MapObserver::RenderMode::Full) ++partial;
         if (status.needsRepaint) ++repaints;
     };
-    observer.didBecomeIdleCallback = [&] { idle = true; };
+    observer.didBecomeIdleCallback = [&] {
+        idle = true;
+    };
     HeadlessFrontend frontend{{402, 874}, 1};
-    MapAdapter map(frontend, observer, fileSource,
-                   MapOptions().withMapMode(MapMode::Continuous).withSize(frontend.getSize()));
+    MapAdapter map(
+        frontend, observer, fileSource, MapOptions().withMapMode(MapMode::Continuous).withSize(frontend.getSize()));
     map.getStyle().loadJSON(terrainIdleStyle);
     map.jumpTo(CameraOptions().withCenter(LatLng{49.1795, 20.0881}).withZoom(15.5).withPitch(53.0).withBearing(284.0));
     for (int i = 0; i < 400 && !idle; ++i) {

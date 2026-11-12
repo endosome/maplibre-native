@@ -67,13 +67,16 @@ public:
 
         return FillExtrusionLayoutVertex{
             .a1 = {static_cast<int16_t>(intPart.x), static_cast<int16_t>(intPart.y)},
-            .a2 = { // We pack a bool (`isDiscarded`) indicating whether this instance is discarded
-                static_cast<uint16_t>((fracPart.x * 256 + fracPart.y) * 2 + (isDiscarded ? 1 : 0)),
-                // The edgeDistance attribute is used for wrapping fill_extrusion patterns
-                edgeDistance
-            },
+            .a2 =
+                {// We pack a bool (`isDiscarded`) indicating whether this instance is discarded
+                 static_cast<uint16_t>((fracPart.x * 256 + fracPart.y) * 2 + (isDiscarded ? 1 : 0)),
+                 // The edgeDistance attribute is used for wrapping fill_extrusion patterns
+                 edgeDistance},
             // Per-polygon centroid, so the extrusion is raised by one terrain elevation
-            .a3 = {centroid.x, centroid.y}};
+            .a3 = {
+                centroid.x,
+                centroid.y
+            }};
     }
 #else
     static FillExtrusionLayoutVertex layoutVertex(const Point<double>& p,
