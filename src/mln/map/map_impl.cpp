@@ -384,7 +384,8 @@ bool Map::Impl::setCenterAltitudeKeepingView(double altitudeMeters) {
     }
     const double shift = rise * std::tan(pitch);
     // Towards the camera, which sits opposite the bearing.
-    const double north = -shift * std::cos(bearing), east = -shift * std::sin(bearing);
+    const double north = -shift * std::cos(bearing);
+    const double east = -shift * std::sin(bearing);
     const LatLng anchored{center.latitude() + north / 111195.0,
                           center.longitude() + east / (111195.0 * std::cos(util::deg2rad(center.latitude())))};
     transform.jumpTo(CameraOptions()
